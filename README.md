@@ -1,9 +1,14 @@
 # Install
 
-$ git clone https://github.com/YunYang1994/TensorFlow2.0-Examples.git
-$ cd TensorFlow2.0-Examples/4-Object_Detection/YOLOV3
-$ pip install -r docs/requirements.txt
-$ pip install opencv-python
+```
+$ python3 -m venv venv
+$ source venv/bin/activate
+$ pip install -r requirements.txt
 $ wget https://pjreddie.com/media/files/yolov3.weights
-
+```
  
+# Examples
+```
+$ python3 object_detect.py kite.jpg
+$ python3 video2image.py moliceiro.m4v
+```
