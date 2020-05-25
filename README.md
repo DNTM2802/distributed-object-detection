@@ -15,8 +15,13 @@ $ python3 video2image.py moliceiro.m4v
 ```
 
 # Update your fork
+Only once:
 ```
 $ git remote add upstream https://github.com/detiuaveiro/CD_distributed_object_detection.git
+```
+
+Every now and then:
+```
 $ git fetch upstream
 $ git checkout master
 $ git merge upstream/master
