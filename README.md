@@ -14,6 +14,11 @@ $ python3 object_detect.py kite.jpg
 $ python3 video2image.py moliceiro.m4v
 ```
 
+testing your server:
+```
+$ curl -F ‘video=@moliceiro.m4v’ http://localhost:5000
+```
+
 # Update your fork
 Only once:
 ```
