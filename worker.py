@@ -1,9 +1,20 @@
 import argparse
+from flask import Flask, request
+from flask import redirect, url_for
+import cv2
+import sys
+from celery import Celery
+import json
+import np
 
-def main(server_address, server_port):
-    pass
 
+app = Celery('frame_works',backend='rpc://', broker='pyamqp://guest@localhost//')
 
+@app.task
+def work_frame(image):
+    image = json.loads(image)
+    image = np.array(image)
+    return "Yes"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

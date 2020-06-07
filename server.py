@@ -3,6 +3,9 @@ from flask import Flask, request
 from flask import redirect, url_for
 import cv2
 import sys
+from celery import Celery
+from worker import work_frame
+import json
 
 
 app = Flask(__name__)
@@ -18,11 +21,12 @@ def upload_file():
     vidcap = cv2.VideoCapture(file.filename)
     success,image = vidcap.read()
     count = 0
-    while success:
+    while (success and count < 10):
         success,image = vidcap.read()
-        print(count)
         count += 1
+        res = work_frame.delay(json.dumps(image.tolist()))
     return f"Thank you"
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
