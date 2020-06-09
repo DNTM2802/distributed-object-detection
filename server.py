@@ -21,12 +21,17 @@ def upload_file():
     vidcap = cv2.VideoCapture(file.filename)
     success,image = vidcap.read()
     count = 0
-    while (success and count < 10):
-        success,image = vidcap.read()
+    arr = []
+    while (success and count < 400):
         count += 1
-        res = work_frame.delay(json.dumps(image.tolist()))
+        res = work_frame.delay(count)
+    print(arr)
     return f"Thank you"
 
+@app.route('/return', methods=['POST'])
+def test():
+    print(request.get_json(force=True))
+    return "nice"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
