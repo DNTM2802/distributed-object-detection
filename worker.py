@@ -15,11 +15,13 @@ import time
 import requests
 from flask.json import jsonify
 import base64
+import datetime
 
 app = Celery('frame_works',backend='rpc://', broker='pyamqp://guest@localhost//')
 
 @app.task()
 def work_frame(data):
+    start_time = datetime.datetime.now()
     #original_image = np.array(json_string)
     response = json.loads(data)
     string = response['img']
@@ -63,9 +65,23 @@ def work_frame(data):
     objects_detected = []
     for x0,y0,x1,y1,prob,class_id in bboxes:
         objects_detected.append(class_names[class_id])
-    print(objects_detected)
-    requests.post('http://127.0.0.1:5000/return', json={"DONE":"DONE"})
-    return "DONE!"
+    final_time = datetime.datetime.now() - start_time
+    obj_types = []
+    final_dict={}
+    person_count=0
+    for obj in objects_detected:
+        if str(obj) == "person":
+            person_count+=1
+        if str(obj) in obj_types:
+            final_dict[str(obj)] += 1
+        else:
+            obj_types.append(str(obj))
+            final_dict[str(obj)] = 1
+    final_json = {"video_id":"some_id", "frame_no":response['frame_no'], "processing_time":str(final_time),"people_detected":person_count,"objects_detected":json.dumps(final_dict)}
+
+
+    requests.post('http://127.0.0.1:5000/return', json=final_json)
+    return "DONE frame n. " + str(response['frame_no']) + "!"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
