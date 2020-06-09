@@ -6,6 +6,9 @@ import sys
 from celery import Celery
 from worker import work_frame
 import json
+import numpy as np
+import codecs
+import base64
 
 
 app = Flask(__name__)
@@ -22,11 +25,15 @@ def upload_file():
     success,image = vidcap.read()
     count = 0
     arr = []
-    while (success and count < 400):
+    while (success and count < 4):
         print(type(image))
         count += 1
-        work_frame.delay(count)
-    print(arr)
+        string = base64.b64encode(cv2.imencode('.jpg', image)[1]).decode()
+        dictt = {
+            'img': string
+        }
+
+        work_frame.delay(json.dumps(dictt,ensure_ascii=False, indent=4))
     return f"Thank you"
 
 @app.route('/return', methods=['POST'])

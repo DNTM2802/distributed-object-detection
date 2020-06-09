@@ -14,14 +14,58 @@ from PIL import Image
 import time
 import requests
 from flask.json import jsonify
+import base64
 
 app = Celery('frame_works',backend='rpc://', broker='pyamqp://guest@localhost//')
 
 @app.task()
-def work_frame(count):
-    json_string = json.dumps({"oi":"ola"})
-    requests.post('http://127.0.0.1:5000/return', json=json_string)
-    return "Results above for frame " + str(count)
+def work_frame(data):
+    #original_image = np.array(json_string)
+    response = json.loads(data)
+    string = response['img']
+    jpg_original = base64.b64decode(string)
+    jpg_as_np = np.frombuffer(jpg_original, dtype=np.uint8)
+    original_image = cv2.imdecode(jpg_as_np, flags=1)
+    
+    # Read class names
+    class_names = {}
+    with open(cfg.YOLO.CLASSES, 'r') as data:
+        for ID, name in enumerate(data):
+            class_names[ID] = name.strip('\n')
+
+    # Setup tensorflow, keras and YOLOv3
+    input_size   = 416
+    input_layer  = tf.keras.layers.Input([input_size, input_size, 3])
+    feature_maps = YOLOv3(input_layer)
+
+    original_image      = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    original_image_size = original_image.shape[:2]
+
+    image_data = utils.image_preporcess(np.copy(original_image), [input_size, input_size])
+    image_data = image_data[np.newaxis, ...].astype(np.float32)
+
+    bbox_tensors = []
+    for i, fm in enumerate(feature_maps):
+        bbox_tensor = decode(fm, i)
+        bbox_tensors.append(bbox_tensor)
+
+    model = tf.keras.Model(input_layer, bbox_tensors)
+    utils.load_weights(model, "./yolov3.weights")
+
+    pred_bbox = model.predict(image_data)
+    pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
+    pred_bbox = tf.concat(pred_bbox, axis=0)
+
+    bboxes = utils.postprocess_boxes(pred_bbox, original_image_size, input_size, 0.3)
+    bboxes = utils.nms(bboxes, 0.45, method='nms')
+
+    # We have our objects detected and boxed, lets move the class name into a list
+    objects_detected = []
+    for x0,y0,x1,y1,prob,class_id in bboxes:
+        objects_detected.append(class_names[class_id])
+    print(objects_detected)
+    requests.post('http://127.0.0.1:5000/return', json={"DONE":"DONE"})
+    return "DONE!"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
