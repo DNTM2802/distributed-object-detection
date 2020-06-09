@@ -23,14 +23,15 @@ def upload_file():
     count = 0
     arr = []
     while (success and count < 400):
+        print(type(image))
         count += 1
-        res = work_frame.delay(count)
+        work_frame.delay(count)
     print(arr)
     return f"Thank you"
 
 @app.route('/return', methods=['POST'])
 def test():
-    print(request.get_json(force=True))
+    print(request.json)
     return "nice"
 
 if __name__ == "__main__":

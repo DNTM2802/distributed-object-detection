@@ -19,8 +19,8 @@ app = Celery('frame_works',backend='rpc://', broker='pyamqp://guest@localhost//'
 
 @app.task()
 def work_frame(count):
-    json_string = jsonify({"oi":"ola"})
-    requests.post('http://127.0.0.1:5000/return', data=json_string)
+    json_string = json.dumps({"oi":"ola"})
+    requests.post('http://127.0.0.1:5000/return', json=json_string)
     return "Results above for frame " + str(count)
 
 if __name__ == "__main__":
