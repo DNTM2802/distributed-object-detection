@@ -13,21 +13,21 @@ from core.config import cfg
 from PIL import Image
 import time
 import requests
-from flask.json import jsonify
-import base64
 import datetime
+import celeryconfig
 
-app = Celery('frame_works',backend='rpc://', broker='pyamqp://guest@localhost//')
+app = Celery('frame_works')
+app.config_from_object(celeryconfig)
 
 @app.task()
-def work_frame(data):
+def work_frame(filename, count):
+
     start_time = datetime.datetime.now()
-    #original_image = np.array(json_string)
-    response = json.loads(data)
-    string = response['img']
-    jpg_original = base64.b64decode(string)
-    jpg_as_np = np.frombuffer(jpg_original, dtype=np.uint8)
-    original_image = cv2.imdecode(jpg_as_np, flags=1)
+    video_id = "video_" + str(filename) + "_frame_" + str(count) + ".jpg"
+    ref_file = "static/" + video_id
+    response = requests.get('http://127.0.0.1:5000/'+ ref_file)
+    arr = np.asarray(bytearray(response.content), dtype=np.uint8)
+    original_image = cv2.imdecode(arr, -1) # 'Load it as it is'
     
     # Read class names
     class_names = {}
@@ -65,23 +65,29 @@ def work_frame(data):
     objects_detected = []
     for x0,y0,x1,y1,prob,class_id in bboxes:
         objects_detected.append(class_names[class_id])
+    print(objects_detected)
     final_time = datetime.datetime.now() - start_time
-    obj_types = []
     final_dict={}
     person_count=0
+    
     for obj in objects_detected:
         if str(obj) == "person":
             person_count+=1
-        if str(obj) in obj_types:
+        if str(obj) in final_dict:
             final_dict[str(obj)] += 1
         else:
-            obj_types.append(str(obj))
             final_dict[str(obj)] = 1
-    final_json = {"video_id":"some_id", "frame_no":response['frame_no'], "processing_time":str(final_time),"people_detected":person_count,"objects_detected":json.dumps(final_dict)}
-
-
+    final_json = {
+        "video_id":filename, 
+        "frame_no":count, 
+        "processing_time":str(final_time),
+        "people_detected":person_count,
+        "objects_detected":json.dumps(final_dict)
+    }
+    # if person_count > 12:
+    #     requests.post('http://127.0.0.1:5000/max_people/' + str(count) + "_" + str(person_count))
     requests.post('http://127.0.0.1:5000/return', json=final_json)
-    return "DONE frame n. " + str(response['frame_no']) + "!"
+    return "DONE frame n. " + str(count) + "of video " + filename + "!"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
