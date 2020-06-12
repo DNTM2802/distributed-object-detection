@@ -1,34 +1,84 @@
-import argparse
-from flask import Flask, request
-from flask import redirect, url_for
+# Video parsing
 import cv2
 import sys
+
+# Celery
 from celery import Celery
-import json
+from celery import bootsteps
+from celery.bin import Option
+import celeryconfig
+
+# Object Detection
 import numpy as np
 import core.utils as utils
 import tensorflow as tf
 from core.yolov3 import YOLOv3, decode
 from core.config import cfg
 from PIL import Image
+
+# Tools
+import json
 import time
 import requests
 import datetime
-import celeryconfig
 
+# Celery configuration
 app = Celery('frame_works')
-app.config_from_object(celeryconfig)
+app.config_from_object(celeryconfig) # Configs file
 
+# Celery arguments -> server and port
+app.user_options['worker'].add(
+    Option('--server', default='127.0.0.1')
+)
+app.user_options['worker'].add(
+    Option('--port', default='5000')
+)
+
+server_addr=""
+
+class CustomArgs(bootsteps.Step):
+
+    def __init__(self, worker, server, port, **options):
+        global server_addr
+        print("SERVER -> " + str(server))
+        print("PORT -> " + str(port))
+        
+        server_str=""
+        port_str=""
+
+        if type(server) == list:
+            server_str = server[0]
+        else:
+            server_str = server
+
+        if type(port) == list:
+            port_str == port[0]
+        else:
+            port_str = port
+            
+        server_addr = "http://" + server_str + ":" + port_str + "/"
+
+app.steps['worker'].add(CustomArgs)
+
+
+# CELERY TASK
 @app.task()
 def work_frame(filename, count):
+    global server_addr
 
     start_time = datetime.datetime.now()
+
+    # GET file from server by server /static reference
     video_id = "video_" + str(filename) + "_frame_" + str(count) + ".jpg"
     ref_file = "static/" + video_id
-    response = requests.get('http://127.0.0.1:5000/'+ ref_file)
+    response = requests.get(server_addr + ref_file)
+
+    # Image transformation to accepted format
     arr = np.asarray(bytearray(response.content), dtype=np.uint8)
-    original_image = cv2.imdecode(arr, -1) # 'Load it as it is'
+    original_image = cv2.imdecode(arr, -1)
     
+    ###### OBJECT DETECTION CODE #######
+
     # Read class names
     class_names = {}
     with open(cfg.YOLO.CLASSES, 'r') as data:
@@ -65,34 +115,33 @@ def work_frame(filename, count):
     objects_detected = []
     for x0,y0,x1,y1,prob,class_id in bboxes:
         objects_detected.append(class_names[class_id])
+
+    ### END OF OBJECT DETECTION CODE ###
+
     print(objects_detected)
+    
     final_time = datetime.datetime.now() - start_time
+    
+    # Elaborate json with frame info and post to server in /return route
     final_dict={}
-    person_count=0
+    people_count=0
     
     for obj in objects_detected:
         if str(obj) == "person":
-            person_count+=1
+            people_count+=1
         if str(obj) in final_dict:
             final_dict[str(obj)] += 1
         else:
             final_dict[str(obj)] = 1
+    
     final_json = {
         "video_id":filename, 
         "frame_no":count, 
         "processing_time":str(final_time),
-        "people_detected":person_count,
+        "people_detected":people_count,
         "objects_detected":json.dumps(final_dict)
     }
-    # if person_count > 12:
-    #     requests.post('http://127.0.0.1:5000/max_people/' + str(count) + "_" + str(person_count))
-    requests.post('http://127.0.0.1:5000/return', json=final_json)
-    return "DONE frame n. " + str(count) + "of video " + filename + "!"
+    
+    requests.post(server_addr + "return", json=final_json)
+    return "\nDONE frame n. " + str(count) + "of video " + filename + "!\n"
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--server-address", help="server address", default="localhost")
-    parser.add_argument("--server-port", help="server address port", default=3456)
-    args = parser.parse_args()
-
-    main(args.server_address, args.server_port)
