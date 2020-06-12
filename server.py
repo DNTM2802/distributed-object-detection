@@ -18,6 +18,9 @@ from pprint import pprint
 import datetime
 import logging
 
+import os
+import glob
+
 # Print to console with colors
 class bcolors:
     HEADER = '\033[95m'
@@ -62,7 +65,7 @@ def upload_file():
 
         work_frame.delay(str(file.filename), count)
         count+=1
-    print(bcolors.OKGREEN + "Done!" + bcolors.ENDC)
+    print(bcolors.OKGREEN + "Done!" + bcolors.ENDC + "\n")
     return f"Video uploaded to server.\n"
 
 # When frame returns from worker
@@ -110,6 +113,10 @@ def test():
             else:
                 print(new_list[len(new_list)-(i+1)], end=', ')
         print('\n')
+
+        files = glob.glob('static/*.jpg')
+        for f in files:
+            os.remove(f)
 
     return "Image recieved by server."
 

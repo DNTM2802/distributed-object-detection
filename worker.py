@@ -42,7 +42,7 @@ class CustomArgs(bootsteps.Step):
         global server_addr
         print("SERVER -> " + str(server))
         print("PORT -> " + str(port))
-        
+
         server_str=""
         port_str=""
 
@@ -52,11 +52,12 @@ class CustomArgs(bootsteps.Step):
             server_str = server
 
         if type(port) == list:
-            port_str == port[0]
+            port_str = port[0]
         else:
             port_str = port
             
         server_addr = "http://" + server_str + ":" + port_str + "/"
+        print("SERVER ADDRESS -> " + server_addr)
 
 app.steps['worker'].add(CustomArgs)
 
