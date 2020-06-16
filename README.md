@@ -47,17 +47,24 @@ To initialize a worker, run:
 celery -A worker worker
 ```
 Optional arguments:
+
 ```--loglevel=info``` - Detailed information in console.
+
 ```--server``` - Server address. Default is ```127.0.0.1```.
+
 ```--port``` - Server port. Default is ```5000```.
+
 ```-n``` - Worker name in the form ```NAME@%h```.
+
 
 #### Flower Monitor Tool for Celery:
 ```celery flower -A worker --broker_url='amqp://guest:guest@localhost:5672/' --broker_api=http://guest:guest@localhost:15672```
+
 Available at: http://localhost:5555/
 
 #### RabitMQ Management Page:
-Available at: http://localhost:15672/
+Available at: http://localhost:15672/.
+
 Login: guest@guest.
 
 
