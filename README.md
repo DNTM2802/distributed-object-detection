@@ -58,7 +58,8 @@ Optional arguments:
 Available at: http://localhost:5555/
 
 #### RabitMQ Management Page:
-Available at: http://localhost:15672/
+Available at: http://localhost:15672/.
+
 Login: guest@guest.
 
 
