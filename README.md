@@ -54,6 +54,7 @@ Optional arguments:
 
 #### Flower Monitor Tool for Celery:
 ```celery flower -A worker --broker_url='amqp://guest:guest@localhost:5672/' --broker_api=http://guest:guest@localhost:15672```
+
 Available at: http://localhost:5555/
 
 #### RabitMQ Management Page:
