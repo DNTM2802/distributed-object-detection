@@ -40,7 +40,7 @@ class CustomArgs(bootsteps.Step):
 
     def __init__(self, worker, server, port, **options):
         global server_addr
-        print("SERVER -> " + str(server))
+        print("\nSERVER -> " + str(server))
         print("PORT -> " + str(port))
 
         server_str=""
@@ -57,7 +57,7 @@ class CustomArgs(bootsteps.Step):
             port_str = port
             
         server_addr = "http://" + server_str + ":" + port_str + "/"
-        print("SERVER ADDRESS -> " + server_addr)
+        print("\nSERVER ADDRESS -> " + server_addr)
 
 app.steps['worker'].add(CustomArgs)
 
@@ -69,7 +69,7 @@ def work_frame(filename, count):
 
     start_time = datetime.datetime.now()
 
-    # GET file from server by server /static reference
+    # GET frame from server by server /static reference
     video_id = "video_" + str(filename) + "_frame_" + str(count) + ".jpg"
     ref_file = "static/" + video_id
     response = requests.get(server_addr + ref_file)
