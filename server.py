@@ -47,7 +47,6 @@ def main(max_persons):
 @app.route('/', methods=['POST'])
 def upload_file():
 
-    global start_time
     global videos_dict
     global final_info
 
@@ -72,7 +71,7 @@ def upload_file():
     vidcap = cv2.VideoCapture(file.filename)
     success,image = vidcap.read()
     count = 0
-    while (success and count < 10):
+    while (success):
         ref_file = "static/video_" + fileid + "_frame_" + str(count) + ".jpg"
         cv2.imwrite(ref_file, image)
         success,image = vidcap.read()
@@ -81,10 +80,9 @@ def upload_file():
         count+=1
     
     # Create entry for this video in the infos dict. Save initial time and total frames to wait for.
-    start_time = datetime.datetime.now()
-    final_info[fileid] = {"total_frames":count,"start_time":start_time}
+    final_info[fileid] = {"total_frames":count-1,"start_time":datetime.datetime.now()}
 
-    print(bcolors.OKGREEN + "Done!" + bcolors.ENDC + "\n")
+    print(bcolors.OKGREEN + "Done recieving file " + str(fileid) + "!" + bcolors.ENDC + "\n")
     return f"\nVideo uploaded to server.\n"
 
 # When frame returns from worker
@@ -92,7 +90,6 @@ def upload_file():
 def test():
 
     global max_people_limit
-    global start_time
     global final_info
 
     # If the max people limit was hit in this frame, print that info in the server console

@@ -1,17 +1,13 @@
 #!/bin/bash
 
-if [ "$#" -eq 0 ]; then
-    echo "Please pass the number of workers you want to run as an argument!"
-    exit 1
-fi
 if [ "$#" -ne 4 ]; then
-    echo "Pass 4 arguments."
+    echo "Pass 4 arguments. (./run.sh WORKERS MAX_PEOPLE SERVER PORT)"
     exit 1
 fi
 
 source venv/bin/activate
 for i in $(seq 1 $1); do
-    x-terminal-emulator -e celery -A worker worker --loglevel=info -n woker$i@%h --server $3 --port $4
+    x-terminal-emulator -e celery -A worker worker --loglevel=info -n woker$i@%h --concurrency=1 --server $3 --port $4
 done
 
 x-terminal-emulator -e python3 server.py --max $2
